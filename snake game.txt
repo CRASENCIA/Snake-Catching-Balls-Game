@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Snake Catching Balls 🐍💖</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Comic Sans MS', sans-serif;
+        background-color: #f9eaff;
+      }
+
+      .game-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 20px;
+      }
+
+      .title {
+        color: #b300b3;
+        font-size: 28px;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      .score {
+        font-size: 20px;
+        color: #800080;
+        margin-bottom: 15px;
+      }
+
+      .board {
+        position: relative;
+        width: 300px;
+        height: 300px;
+        background-color: #fff5f9;
+        border: 3px dashed #ff99cc;
+        box-shadow: 0 0 15px #ffccff;
+        overflow: hidden;
+      }
+
+      .snake {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background-color: #ff33cc;
+        border-radius: 3px;
+        box-shadow: 0 0 4px #ff66ff;
+      }
+
+      .food {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background-color: #33cc33;
+        border-radius: 50%;
+        box-shadow: 0 0 6px #00cc66;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <!-- React + ReactDOM CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Your App -->
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+
+      const BOARD_SIZE = 300;
+      const SCALE = 10;
+
+      const getRandomCoords = () => {
+        let x = Math.floor(Math.random() * (BOARD_SIZE / SCALE)) * SCALE;
+        let y = Math.floor(Math.random() * (BOARD_SIZE / SCALE)) * SCALE;
+        return [x, y];
+      };
+
+      function App() {
+        const [snake, setSnake] = useState([[0, 0]]);
+        const [food, setFood] = useState(getRandomCoords());
+        const [direction, setDirection] = useState("RIGHT");
+        const [score, setScore] = useState(0);
+
+        useEffect(() => {
+          const handleKeyDown = (e) => {
+            if (e.key === "ArrowUp" && direction !== "DOWN") setDirection("UP");
+            else if (e.key === "ArrowDown" && direction !== "UP") setDirection("DOWN");
+            else if (e.key === "ArrowLeft" && direction !== "RIGHT") setDirection("LEFT");
+            else if (e.key === "ArrowRight" && direction !== "LEFT") setDirection("RIGHT");
+          };
+          window.addEventListener("keydown", handleKeyDown);
+          return () => window.removeEventListener("keydown", handleKeyDown);
+        }, [direction]);
+
+        useEffect(() => {
+          const move = () => {
+            setSnake((prevSnake) => {
+              const newHead = [...prevSnake[0]];
+              if (direction === "RIGHT") newHead[0] += SCALE;
+              else if (direction === "LEFT") newHead[0] -= SCALE;
+              else if (direction === "UP") newHead[1] -= SCALE;
+              else if (direction === "DOWN") newHead[1] += SCALE;
+
+              const newSnake = [newHead, ...prevSnake];
+
+              if (newHead[0] === food[0] && newHead[1] === food[1]) {
+                setFood(getRandomCoords());
+                setScore((s) => s + 1);
+              } else {
+                newSnake.pop();
+              }
+
+              return newSnake;
+            });
+          };
+
+          const interval = setInterval(move, 150);
+          return () => clearInterval(interval);
+        }, [direction, food]);
+
+        useEffect(() => {
+          const head = snake[0];
+
+          const hasCollidedWithSelf = snake
+            .slice(1)
+            .some((segment) => segment[0] === head[0] && segment[1] === head[1]);
+
+          const outOfBounds =
+            head[0] < 0 ||
+            head[1] < 0 ||
+            head[0] >= BOARD_SIZE ||
+            head[1] >= BOARD_SIZE;
+
+          if (hasCollidedWithSelf || outOfBounds) {
+            alert("Game Over babe 💔");
+            setSnake([[0, 0]]);
+            setFood(getRandomCoords());
+            setDirection("RIGHT");
+            setScore(0);
+          }
+        }, [snake]);
+
+        return (
+          <div className="game-container">
+            <h1 className="title">🐍 Snake Catching Balls 🎯</h1>
+            <p className="score">Score: {score}</p>
+            <div className="board">
+              {snake.map((seg, i) => (
+                <div
+                  key={i}
+                  className="snake"
+                  style={{ left: seg[0], top: seg[1] }}
+                ></div>
+              ))}
+              <div
+                className="food"
+                style={{ left: food[0], top: food[1] }}
+              ></div>
+            </div>
+          </div>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<App />);
+    </script>
+  </body>
+</html>
